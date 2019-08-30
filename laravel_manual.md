@@ -197,3 +197,103 @@ MAIL_PASSWORD=SG.MniC-iQgRFOGJ9_JrSYYkw.4R80QU6KvdlVwpkD-ObqW1fMU3F4_vtt-_Zr-H1a
 MAIL_ENCRYPTION=null
 ```
 
+auth（ログインページに強制移動)
+```
+php artisan make:auth
+
+web.php
+Auth::routes();
+
+Route::group(['middleware' => 'auth'] ,function() {
+    Route::get('/home', 'HomeController@home')->name('home');
+});
+```
+
+モデル one to one
+```
+php artisan make:migration create_addresses_table --create=addresses
+
+migration file
+ public function up()
+    {
+        Schema::create('addresses', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('street');
+            $table->string('city');
+            $table->integer('user_id')->unsigned;
+            $table->timestamps();
+        });
+    }
+
+php artisan make:controller UserController
+
+php artisan make:model Address
+
+User.php
+    public function address() {
+        return $this->hasOne('App\Address');
+    }
+
+Address.php
+class Address extends Model
+{
+    protected $guraded = [];
+    public function user() {
+        return $this->belogsTo('App\User');
+    }
+}
+
+UserController.php
+
+use Illuminate\Http\Request;
+use Auth;
+
+class UserController extends Controller
+{
+    public function index() {
+        return Auth::user();
+    }
+}
+```
+
+保存する数が複数ある時
+
+```
+<div class="form-group">
+    <label>Choice1</label>
+    <input type="text" class="form-control" name="choice[]">
+</div>
+
+<div class="form-group">
+    <label>Choice2</label>
+    <input type="text" class="form-control" name="choice[]">
+</div>
+
+<div class="form-group">
+    <label>Choice3</label>
+    <input type="text" class="form-control" name="choice[]">
+</div>
+
+"choice": [
+"choice1",
+"choice2",
+"choice3"
+]
+
+    public function store($id) {
+        $lesson = Lesson::find($id);
+
+        $question = $lesson->questions()->create([
+            "question" => request()->question,
+            "answer_id" => "0" //temporary value
+        ]);
+
+        foreach(request()->choices as $key => $choice) {
+            $question->choices()->create([
+                "choice" => $choice,
+            ]);
+        }
+
+        return redirect('lessons');
+```
+
