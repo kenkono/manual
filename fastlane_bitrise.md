@@ -614,7 +614,10 @@ Working directory = $BITRISE_SOURCE_DIR
 The `npm` command with arguments to run = install
 ```
 - fastlane
-default
+```
+fastlane lane = $FASTLANE_LANE
+Working directory = $FASTLANE_WORK_DIR
+```
 - Deploy to Bitrise.io  
 default
 
@@ -702,7 +705,10 @@ Info.plist file path = $INFO_PLIST_PATH
 Build Number = $BITRISE_BUILD_NUMBER
 ```
 - fastlane
-default
+```
+fastlane lane = $FASTLANE_LANE
+Working directory = $FASTLANE_WORK_DIR
+```
 - Deploy to Bitrise.io  
 default
 
