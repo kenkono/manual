@@ -221,33 +221,9 @@ sudo keytool -genkey -v -keystore my-upload-key.keystore -alias my-key-alias -ke
 vi ../gradle.properties
 ```
 
-1.edit `android/gradle.properties`
-```gradle.properties
-MYAPP_UPLOAD_STORE_FILE=my-upload-key.keystore
-MYAPP_UPLOAD_KEY_ALIAS=my-key-alias
-MYAPP_UPLOAD_STORE_PASSWORD=*****
-MYAPP_UPLOAD_KEY_PASSWORD=*****
-```
-
-2.Or using env file(more secure)
-```
-export MYAPP_UPLOAD_STORE_FILE="/Users/konoken/vananaz/react-native-platform/android/secure/my-upload-key.keystore"
-export MYAPP_UPLOAD_KEY_ALIAS="my-key-alias"
-export MYAPP_UPLOAD_STORE_PASSWORD="*****"
-export MYAPP_UPLOAD_KEY_PASSWORD="*****"
-```
-
-Check whether env is working correctly.
-```
-echo $MYAPP_UPLOAD_STORE_FILE
-echo $MYAPP_UPLOAD_KEY_ALIAS
-echo $MYAPP_UPLOAD_STORE_PASSWORD
-echo $MYAPP_UPLOAD_KEY_PASSWORD
-```
-
-When editing `build.gradle`, we have three choices.
-1. edit `android/app/build.gradle`  
-And check the `applicationId`(change depends on customer)
+Edit `build.gradle`.  
+We have three choices.  
+1. Use reference file
 
 ```build.gradle
 android {
@@ -273,7 +249,15 @@ android {
 ...
 ```
 
-2. use env file(For `Bitrise`, need to select this choice)
+Edit `android/gradle.properties`
+```gradle.properties
+MYAPP_UPLOAD_STORE_FILE=my-upload-key.keystore
+MYAPP_UPLOAD_KEY_ALIAS=my-key-alias
+MYAPP_UPLOAD_STORE_PASSWORD=*****
+MYAPP_UPLOAD_KEY_PASSWORD=*****
+```
+
+2. Use env file(For using `Bitrise`, need to select this choice)
 ```
 android {
     ...
@@ -298,7 +282,23 @@ android {
 ...
 ```
 
-3. ベタ打ち
+Put environment valuable
+```
+export MYAPP_UPLOAD_STORE_FILE="/Users/konoken/vananaz/react-native-platform/android/secure/my-upload-key.keystore"
+export MYAPP_UPLOAD_KEY_ALIAS="my-key-alias"
+export MYAPP_UPLOAD_STORE_PASSWORD="*****"
+export MYAPP_UPLOAD_KEY_PASSWORD="*****"
+```
+
+Check whether env is working correctly.
+```
+echo $MYAPP_UPLOAD_STORE_FILE
+echo $MYAPP_UPLOAD_KEY_ALIAS
+echo $MYAPP_UPLOAD_STORE_PASSWORD
+echo $MYAPP_UPLOAD_KEY_PASSWORD
+```
+
+3. Magic number
 ```
     signingConfigs {
         release {
@@ -324,7 +324,7 @@ ref:https://developer.android.com/distribute/best-practices/develop/64-bit#build
 
 ```
     defaultConfig {
-        applicationId "jp.co.alc.kikureco"
+        applicationId "jp.co.hogehoge"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -335,11 +335,14 @@ ref:https://developer.android.com/distribute/best-practices/develop/64-bit#build
     }
 ``` 
 
-ref:https://stackoverflow.com/a/21795177  
-had to Build -> Clean Project then File -> Invalidate Caches/Restart(Android studio code)
+If you update ndk version and try to make `.apk` file next time, below error occures sometime.
 ```
 error: invalid file path '/Users/konoken/kikutan-mobile/node_modules/react-native-gesture-handler/android/build/intermediates/manifests/aapt/release/AndroidManifest.xml'.
 ```
+ref:https://stackoverflow.com/a/21795177  
+Go to your android studio code and `Build -> Clean Project` then `File -> Invalidate Caches/Restart`.  
+Then try again.
+
 
 バージョンの上げ方  
 https://high-programmer.com/2019/02/06/update-android-app-by-google-play/ 
@@ -706,62 +709,7 @@ default
 ### Triggers
 Select which branch we would like to hool and which WORKFLOW we would like to act.
 
-# Install apk file at device manually
-Connect your android device and computer.
-
-```
-Go to the apk file directory.
-adb install sample.apk
-```
-
-error
-```
-mbakono:release konoken$ adb install app-release.apk
-* daemon not running; starting now at tcp:5037
-* daemon started successfully
-error: device unauthorized.
-This adb server's $ADB_VENDOR_KEYS is not set
-Try 'adb kill-server' if that seems wrong.
-Otherwise check for a confirmation dialog on your device.
-```
-solution
-```
-remove your connection USB from computer.
-Check your android device.
-Go to the Systems -> Developer options -> Turn on USB debugging and tap Revoke USB debugging authorizations.
-
-put below command
-adb kill-server
-adb start-server
-```
-ref  
-https://www.addictivetips.com/android/fix-adb-device-unauthorized-message-android/  
-
-
 # Ref
 [Publishing to Google Play Store](https://facebook.github.io/react-native/docs/signed-apk-android)  
 [Nuke](https://docs.fastlane.tools/actions/match/#nuke)
 
-
-```
-CFBundler nothing...
-
-remove ios/build
-try npm run ios again
-
-only one xcodeproj need.
-```
-
-git push origin $BITRISE_GIT_BRANCH
-
-git checkout -b $BITRISE_GIT_BRANCH
-git push origin $BITRISE_GIT_BRANCH
-
-git push origin HEAD:$BITRISE_GIT_BRANCH
-
-```
-+ git push origin fastlane
-error: src refspec fastlane does not match any
-https://stackoverflow.com/a/40929378
-
-```
