@@ -24,7 +24,7 @@ bundle exec fastlane produce
 Answer below question
 
 ```
-Your Apple ID Username:developer@vananaz.com
+Your Apple ID Username:hogehoge@gmail.com
 Multiple teams found on the Developer Portal, please enter the number of the team you want to use:
 1) J56CD9XRYW "VANANAZ SYSTEMS INC." (Company/Organization)
 2) ZSGPZXXA2Q "YourStand, inc." (Company/Organization)
@@ -55,7 +55,7 @@ Answer below question
 2. ReactNativePlatform
 ? 2
 [18:35:26]: Apple ID Username:
-developer@vananaz.com
+hogehoge@gmail.com
 Multiple App Store Connect teams found, please enter the number of the team you want to use:
 1) "VANANAZ SYSTEMS INC." (118381617)
 2) "YourStand, inc." (119185798)
