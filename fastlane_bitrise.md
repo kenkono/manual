@@ -150,7 +150,7 @@ Passphrase for Git Repo: put your github password
 ```
 
 If error occur `[!] Could not create another Development certificate, reached the maximum number of available Development certificates.`  
-Check with Mr.Nakazono(below command is delete dommand) and  
+Check with Mr.Nakazono(below command is delete command) and  
 Run `bundle exec fastlane match nuke development`
 
 ```
@@ -158,7 +158,7 @@ bundle exec fastlane match appstore
 ```
 
 If error occur `[!] Could not create another Distribution certificate, reached the maximum number of available Distribution certificates.`  
-Check with Mr.Nakazono(below command is delete dommand) and  
+Check with Mr.Nakazono(below command is delete command) and  
 Run `bundle exec fastlane match nuke appstore`
 
 Open Xcode and change the general
@@ -216,9 +216,8 @@ note:We need to make .apk file and deploy at Google Play Console manually at fir
 
 ```
 mkdir secure
-cd android/secure or cd android/app
+cd android/secure
 sudo keytool -genkey -v -keystore my-upload-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
-vi ../gradle.properties
 ```
 
 Edit `build.gradle`.  
@@ -353,9 +352,12 @@ cd android
 ./gradlew assembleRelease
 ```
 
-Note: Keep your `my-upload-key.keystore` because you should use this one next update(make .apk)  
+Note: Keep your `my-upload-key.keystore`(Do not be lost) because you should use this one next update.  
+
 You can see .apk file at `android/app/build/outputs/apk/release`  
-Then go to the Google play console and CREATE APPLICATION with using that .apk file.  
+
+Then go to the Google play console and CREATE APPLICATION with using this .apk file.  
+
 If error happen invalid certificate, please check `signingConfig signingConfigs.release` is valid
 
 ### (Note)Check the fingerprint at .apk file
@@ -497,7 +499,7 @@ bundle exec fastlane internal
 Generate `.apk` file automatically and deploy to Google Play Console.  
 And automatically update version number also at `android/app/build.gradle`
 
-# Bitrise
+# Bitrise(ios and android)
 
 Note:Put the ssh public key at user settings not each repository.
 
@@ -513,7 +515,7 @@ https://devcenter.bitrise.io/builds/build-numbering-and-app-versioning/
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
 
-        Integer buildNumb = System.getenv("BITRISE_BUILD_NUMBER") as Integer        
+        Integer buildNumb = System.getenv("BITRISE_BUILD_NUMBER") as Integer
         versionCode buildNumb ?: 1 
         
         versionName "1.0"
@@ -530,7 +532,6 @@ And remove increment function from `android/fastlane/Fastfile` because we use Bi
   lane :internal do
 
     # remove below increment function 
-
     # increment_version_code(
     #   gradle_file_path: "./app/build.gradle"
     # )
@@ -636,7 +637,6 @@ Ref: https://tech.gunosy.io/entry/ios_build_number_with_fastlane_or_bitrise
   desc "Push a new release build to the App Store"
   lane :release do
     # remove increment function
-
     # increment_build_number(xcodeproj: "ReactNativePlatform.xcodeproj")
 
     match(type: "appstore")
@@ -713,9 +713,88 @@ Working directory = $FASTLANE_WORK_DIR
 default
 
 ### Triggers
-Select which branch we would like to hool and which WORKFLOW we would like to act.
+Select which branch we would like to hook and which WORKFLOW we would like to act.
+
+# Bitrise(work ios and android at the same time)
+
+bitrise.yml
+```
+---
+format_version: '8'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: react-native
+workflows:
+  common:
+    steps:
+    - script@1.1.5:
+        title: Git Confiure
+        inputs:
+        - content: "#!/usr/bin/env bash\n# fail if any commands fails\nset -e\n# debug
+            log\nset -x\n\n# Add Github to known hosts\nssh-keyscan -t rsa github.com
+            >> ~/.ssh/known_hosts\n\n# Configure Git User\ngit config --global user.name
+            $GITHUB_USER_NAME\ngit config --global user.email $GITHUB_USER_EMAIL "
+  android:
+    steps:
+    - install-react-native@0.9.1: {}
+    - npm@1.1.0:
+        inputs:
+        - command: install
+    - file-downloader@1.0.1:
+        title: File Downloader for Keystore
+        inputs:
+        - destination: "$MYAPP_UPLOAD_STORE_FILE"
+        - source: "$BITRISEIO_ANDROID_KEYSTORE_URL"
+    - file-downloader@1.0.1:
+        title: File Downloader for JSON file
+        inputs:
+        - source: "$BITRISEIO_JSON_SECRET_URL"
+        - destination: "$GOOGLE_JSON_SECRET_FILE"
+    - fastlane@2.5.2:
+        inputs:
+        - work_dir: "$FASTLANE_WORK_DIR_ANDROID"
+        - lane: "$FASTLANE_LANE_ANDROID"
+    - deploy-to-bitrise-io@1.7.0: {}
+  ios:
+    steps:
+    - install-react-native@0.9.1: {}
+    - npm@1.1.0:
+        inputs:
+        - command: install
+    - set-xcode-build-number@1.0.8:
+        inputs:
+        - plist_path: "$INFO_PLIST_PATH"
+    - fastlane@2.5.2:
+        inputs:
+        - work_dir: "$FASTLANE_WORK_DIR_IOS"
+        - lane: "$FASTLANE_LANE_IOS"
+    - deploy-to-bitrise-io@1.7.0: {}
+app:
+  envs:
+  # android
+  - opts:
+      is_expand: false
+    FASTLANE_WORK_DIR_ANDROID: android
+  - opts:
+      is_expand: false
+    FASTLANE_LANE_ANDROID: android internal
+  - opts:
+      is_expand: false
+    GITHUB_USER_NAME: hogehoge
+  - opts:
+      is_expand: false
+    GITHUB_USER_EMAIL: hogehoge@gmail.com
+  # ios
+  - FASTLANE_XCODE_LIST_TIMEOUT: '120'
+    opts:
+      is_expand: false
+  - opts:
+      is_expand: false
+    FASTLANE_WORK_DIR_IOS: ios
+  - opts:
+      is_expand: false
+    FASTLANE_LANE_IOS: ios beta
+```
 
 # Ref
 [Publishing to Google Play Store](https://facebook.github.io/react-native/docs/signed-apk-android)  
 [Nuke](https://docs.fastlane.tools/actions/match/#nuke)
-
