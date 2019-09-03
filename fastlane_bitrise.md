@@ -218,7 +218,10 @@ note:We need to make .apk file and deploy at Google Play Console manually at fir
 mkdir secure
 cd android/secure
 sudo keytool -genkey -v -keystore my-upload-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
+
+sudo keytool -genkey -v -keystore kikureco.keystore -alias kikureco -keyalg RSA -keysize 2048 -validity 10000
 ```
+Rt5fSuPkN33NAfhD
 
 Edit `build.gradle`.  
 We have three choices.  
@@ -499,11 +502,8 @@ bundle exec fastlane internal
 Generate `.apk` file automatically and deploy to Google Play Console.  
 And automatically update version number also at `android/app/build.gradle`
 
-# Bitrise(ios and android)
-
+# Bitrise(android) 
 Note:Put the ssh public key at user settings not each repository.
-
-## android 
 ### Increment version settings
 
 edit `android/app/build.gradle` to use Bitrise commit number.  
@@ -627,7 +627,8 @@ Select which branch we would like to hool and which WORKFLOW we would like to ac
 
 
 
-## ios
+# Bitrise(ios)
+Note:Put the ssh public key at user settings not each repository.
 ### Increment verions setting
 
 Remove increment function from `ios/fastlane/Fastfile` because we use Bitrise working number and increment this number automatically.  
@@ -665,7 +666,6 @@ Add below variables.
 ```
 $FASTLANE_USER = Email about appleID
 $FASTLANE_PASSWORD = Password about appleID
-$MYAPP_UPLOAD_KEY_ALIAS = $BITRISEIO_ANDROID_KEYSTORE_ALIAS
 $MATCH_PASSWORD = Password about GitHub
 $INFO_PLIST_PATH = ios/ReactNativePlatform(application name)/Info.plist
 ```
@@ -717,7 +717,72 @@ Select which branch we would like to hook and which WORKFLOW we would like to ac
 
 # Bitrise(work ios and android at the same time)
 
-bitrise.yml
+### Workflows
+
+- Activate SSH key (RSA private key)  
+default  
+
+- Git Clone Repository  
+default  
+
+- Script
+
+```
+#!/usr/bin/env bash
+# fail if any commands fails
+set -e
+# debug log
+set -x
+
+bitrise run common --config bitrise.yml
+bitrise run ios --config bitrise.yml &
+bitrise run android --config bitrise.yml &
+wait
+```
+### Env Vars
+Add below environment variables.
+
+```
+# Common
+$GITHUB_USER_NAME = hogehoge
+$GITHUB_USER_EMAIL = hogehoge@gmail.com
+# For android
+$FASTLANE_WORK_DIR_ANDROID = android
+$FASTLANE_LANE_ANDROID = android internal
+# For ios
+$FASTLANE_XCODE_LIST_TIMEOUT = 120
+$FASTLANE_WORK_DIR_IOS = ios
+$FASTLANE_LANE_IOS = ios beta
+```
+
+### Secrets
+Add below variables.  
+Change the correct name of `json file`.
+```
+# For android
+$MYAPP_UPLOAD_STORE_FILE = $BITRISE_SOURCE_DIR/android/secure/my-upload-key.keystore
+$MYAPP_UPLOAD_STORE_PASSWORD = $BITRISEIO_ANDROID_KEYSTORE_PASSWORD
+$MYAPP_UPLOAD_KEY_ALIAS = $BITRISEIO_ANDROID_KEYSTORE_ALIAS
+$MYAPP_UPLOAD_KEY_PASSWORD = $BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD
+$GOOGLE_JSON_SECRET_FILE = $BITRISE_SOURCE_DIR/android/secure/api-4654920470886275998-753658-e2d2deefe64a.json
+# For ios
+$FASTLANE_USER = Email about appleID
+$FASTLANE_PASSWORD = Password about appleID
+$MATCH_PASSWORD = Password about GitHub
+$INFO_PLIST_PATH = ios/ReactNativePlatform(application name)/Info.plist
+```
+
+### Code Signing
+
+Upload keystore file at `ANDROID KEYSTORE FILE
+`
+And put your keystore alias and password.  
+
+Upload google play console api file at `GENERIC FILE STORAGE`  
+File Storage ID is `JSON_SECRET`
+
+
+### bitrise.yml(Put the root directory)
 ```
 ---
 format_version: '8'
@@ -798,3 +863,52 @@ app:
 # Ref
 [Publishing to Google Play Store](https://facebook.github.io/react-native/docs/signed-apk-android)  
 [Nuke](https://docs.fastlane.tools/actions/match/#nuke)
+
+# android crash on simurator(on PC)
+
+```
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        applicationId "com.kikureco"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            // For making apk file
+            // abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
+
+            // For developing to avoid crash
+            abiFilters 'armeabi-v7a','x86'
+
+        }
+    }
+
+    // Comment out below for developing to avoid crash
+    // signingConfigs {
+    //     release {
+    //             storeFile file(System.getenv("MYAPP_UPLOAD_STORE_FILE"))
+    //             storePassword System.getenv("MYAPP_UPLOAD_STORE_PASSWORD")
+    //             keyAlias System.getenv("MYAPP_UPLOAD_KEY_ALIAS")
+    //             keyPassword System.getenv("MYAPP_UPLOAD_KEY_PASSWORD")
+    //     }
+    // }
+
+    splits {
+        abi {
+            reset()
+            enable enableSeparateBuildPerCPUArchitecture
+            universalApk false  // If true, also generate a universal APK
+            include "armeabi-v7a", "x86"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            // Comment out below for developing to avoid crash
+            // signingConfig signingConfigs.release
+```
