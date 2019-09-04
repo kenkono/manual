@@ -903,8 +903,8 @@ Build Number = $BITRISE_BUILD_NUMBER
 ```
 - fastlane
 ```
-fastlane lane = $FASTLANE_LANE
-Working directory = $FASTLANE_WORK_DIR
+fastlane lane = $FASTLANE_LANE_IOS
+Working directory = $FASTLANE_WORK_DIR_IOS
 ```
 - Deploy to Bitrise.io  
 default
@@ -950,8 +950,8 @@ The `npm` command with arguments to run = install
 ```
 - fastlane
 ```
-fastlane lane = $FASTLANE_LANE
-Working directory = $FASTLANE_WORK_DIR
+fastlane lane = $FASTLANE_LANE_ANDROID
+Working directory = $FASTLANE_WORK_DIR_ANDROID
 ```
 - Deploy to Bitrise.io  
 default
