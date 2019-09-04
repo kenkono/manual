@@ -39,6 +39,7 @@ php artisan make:controller LessonController
 ```
 php artisan make:migration create_followers_table --create=followers
 php artisan make:migration create_lessons_table --create=lessons
+php artisan make:migration create_user_answers_table --create=user_answers
 
 rollback
 php artisan migrate:rollback --step=1
@@ -295,5 +296,12 @@ class UserController extends Controller
         }
 
         return redirect('lessons');
+```
+
+functionの名前とcolumnが違う場合、別途columnを加える必要がある
+```
+    public function userTakenCourse() {
+        return $this->belongsTo('App\UserTakencourse' , 'taken_course_id');
+    }
 ```
 

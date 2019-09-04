@@ -715,7 +715,7 @@ default
 ### Triggers
 Select which branch we would like to hook and which WORKFLOW we would like to act.
 
-# Bitrise(work ios and android at the same time)
+# Bitrise(work ios and android at the same time) with `bitrise.yml`
 
 ### Workflows
 
@@ -860,6 +860,164 @@ app:
     FASTLANE_LANE_IOS: ios beta
 ```
 
+# Bitrise(work ios and android at the same time) with `Bitrise Start Build`
+
+## Ref
+[Starting parallel builds with a single trigger](https://devcenter.bitrise.io/builds/triggering-builds/trigger-multiple-workflows/)
+
+## Workflows
+Make 3 workflows
+### fastlane_ios
+
+Add below flow
+- Activate SSH key  
+default
+- Script
+```
+#!/usr/bin/env bash
+# fail if any commands fails
+set -e
+# debug log
+set -x
+
+# Add Github to known hosts
+ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+
+# Configure Git User
+git config --global user.name $GITHUB_USER_NAME
+git config --global user.email $GITHUB_USER_EMAIL 
+```
+- Git Clone Repository  
+default
+- Install React Native  
+default
+- Run npm command
+```
+Working directory = $BITRISE_SOURCE_DIR
+The `npm` command with arguments to run = install
+```
+- Set Xcode Project Build Number
+```
+Info.plist file path = $INFO_PLIST_PATH
+Build Number = $BITRISE_BUILD_NUMBER
+```
+- fastlane
+```
+fastlane lane = $FASTLANE_LANE
+Working directory = $FASTLANE_WORK_DIR
+```
+- Deploy to Bitrise.io  
+default
+
+### fastlane_android
+
+Add below flow
+- Activate SSH key  
+default
+- Script
+```
+#!/usr/bin/env bash
+# fail if any commands fails
+set -e
+# debug log
+set -x
+
+# Add Github to known hosts
+ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+
+# Configure Git User
+git config --global user.name $GITHUB_USER_NAME
+git config --global user.email $GITHUB_USER_EMAIL 
+```
+- Git Clone Repository  
+default
+- File Downloader  
+```
+Download source url = $BITRISEIO_ANDROID_KEYSTORE_URL
+Download destination path = $MYAPP_UPLOAD_STORE_FILE
+```
+- File Downloader  
+```
+Download source url = $BITRISEIO_JSON_SECRET_URL
+Download destination path = $GOOGLE_JSON_SECRET_FILE
+```
+- Install React Native  
+default
+- Run npm command
+```
+Working directory = $BITRISE_SOURCE_DIR
+The `npm` command with arguments to run = install
+```
+- fastlane
+```
+fastlane lane = $FASTLANE_LANE
+Working directory = $FASTLANE_WORK_DIR
+```
+- Deploy to Bitrise.io  
+default
+
+### parallel_builds
+
+Add below flow
+
+- Bitrise Start Build
+```
+Bitrise Access Token = $BITRISE_API
+Workflows↓(One line One workflow)
+fastlane_android
+fastlane_ios
+```
+
+### Secrets
+Add below variables.  
+Change the correct name of `json file`.
+```
+# For android
+$MYAPP_UPLOAD_STORE_FILE = $BITRISE_SOURCE_DIR/android/secure/my-upload-key.keystore
+$MYAPP_UPLOAD_STORE_PASSWORD = $BITRISEIO_ANDROID_KEYSTORE_PASSWORD
+$MYAPP_UPLOAD_KEY_ALIAS = $BITRISEIO_ANDROID_KEYSTORE_ALIAS
+$MYAPP_UPLOAD_KEY_PASSWORD = $BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD
+$GOOGLE_JSON_SECRET_FILE = $BITRISE_SOURCE_DIR/android/secure/api-4654920470886275998-753658-e2d2deefe64a.json
+# For ios
+$FASTLANE_USER = Email about appleID
+$FASTLANE_PASSWORD = Password about appleID
+$MATCH_PASSWORD = Password about GitHub
+$INFO_PLIST_PATH = ios/ReactNativePlatform(application name)/Info.plist
+# For Bitrise Start Build
+$BITRISE_API = Personal access tokens(Check below instruction)
+```
+About `$BITRISE_API` value, go to the `Account settings -> Security -> Personal access tokens (BETA) -> Generate new`
+
+
+
+### Code Signing
+
+Upload keystore file at `ANDROID KEYSTORE FILE
+`
+And put your keystore alias and password.  
+
+Upload google play console api file at `GENERIC FILE STORAGE`  
+File Storage ID is `JSON_SECRET`
+
+### Env Vars
+Add below environment variables.
+
+```
+# Common
+$GITHUB_USER_NAME = hogehoge
+$GITHUB_USER_EMAIL = hogehoge@gmail.com
+# For android
+$FASTLANE_WORK_DIR_ANDROID = android
+$FASTLANE_LANE_ANDROID = android internal
+# For ios
+$FASTLANE_XCODE_LIST_TIMEOUT = 120
+$FASTLANE_WORK_DIR_IOS = ios
+$FASTLANE_LANE_IOS = ios beta
+```
+
+### Triggers
+Select which branch we would like to hook and select the `parallel_builds` workflow.
+
 # Ref
 [Publishing to Google Play Store](https://facebook.github.io/react-native/docs/signed-apk-android)  
 [Nuke](https://docs.fastlane.tools/actions/match/#nuke)
@@ -912,3 +1070,6 @@ android {
             // Comment out below for developing to avoid crash
             // signingConfig signingConfigs.release
 ```
+
+# Cannot delete and re-use applicationID
+https://www.quora.com/How-can-I-completely-delete-unpublished-apps-from-my-Google-Developer-Console
