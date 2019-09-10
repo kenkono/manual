@@ -2,7 +2,9 @@
 
 ## ios
 
-Note:Check working by the emulator correctly before doing fastlane. 
+Note:Check working by the emulator correctly before doing fastlane.   
+`Product ->scheme -> edit scheme`  
+`edit scheme -> run -> release`
 
 ```
 sudo gem install bundler
@@ -146,7 +148,7 @@ You can see the file `ios/fastlane/Matchfile`
 ```
 bundle exec fastlane match development
 
-Passphrase for Git Repo: put your github password
+Passphrase for Git Repo: put password(do not forget!!!)
 ```
 
 If error occur `[!] Could not create another Development certificate, reached the maximum number of available Development certificates.`  
@@ -159,7 +161,13 @@ bundle exec fastlane match appstore
 
 If error occur `[!] Could not create another Distribution certificate, reached the maximum number of available Distribution certificates.`  
 Check with Mr.Nakazono(below command is delete command) and  
-Run `bundle exec fastlane match nuke appstore`
+Run `bundle exec fastlane match nuke appstore` or `bundle exec fastlane match nuke distribution`
+
+If other person need to use certificate, put below command.
+```
+bundle exec fastlane match development --readonly
+bundle exec fastlane match appstore --readonly
+```
 
 Open Xcode and change the general
 - uncheck Automatically manage signing
@@ -167,6 +175,8 @@ Open Xcode and change the general
 - Signing(Release) match Appstore ...
 
 Change reactnativeplatformTests(Top left side icon)  
+
+- uncheck Automatically manage signing  
 
 Signing(Debug)
 - team: VANANAZ SYSTEM
@@ -266,12 +276,10 @@ android {
     defaultConfig { ... }
     signingConfigs {
         release {
-            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
                 storeFile file(System.getenv("MYAPP_UPLOAD_STORE_FILE"))
                 storePassword System.getenv("MYAPP_UPLOAD_STORE_PASSWORD")
                 keyAlias System.getenv("MYAPP_UPLOAD_KEY_ALIAS")
                 keyPassword System.getenv("MYAPP_UPLOAD_KEY_PASSWORD")
-            }
         }
     }
     buildTypes {

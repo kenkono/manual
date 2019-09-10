@@ -305,3 +305,50 @@ functionの名前とcolumnが違う場合、別途columnを加える必要があ
     }
 ```
 
+varidationの繰り返しを避ける
+```
+php artisan make:request LessonRequest
+
+app/Http/Requests/LessonRequest.php
+
+class LessonRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        return [
+            'lesson_title' => ['required'],
+            'lesson_description' => ['required'],
+        ];
+    }
+}
+
+LessonController.php
+
+use App\Http\Requests\LessonRequest;
+
+    public function storeNewLessons(LessonRequest $request) {
+
+        $lesson = new Lesson();
+        $lesson->title = $request->lesson_title;
+        $lesson->explanation = $request->lesson_description;
+        $lesson->save();
+
+        return redirect('lessons');
+    }
+```
+
