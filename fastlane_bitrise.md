@@ -6,6 +6,8 @@ Note:Check working by the emulator correctly before doing fastlane.
 `Product ->scheme -> edit scheme`  
 `edit scheme -> run -> release`
 
+Option: If you would liek to deploy by manual, change `Generic iOS device`. Then go to `Product -> Archive`
+
 ```
 sudo gem install bundler
 cd ios
@@ -96,6 +98,8 @@ And edit below
     "GAMBLING_CONTESTS": 0
   }
 ```
+
+### Using `.xcodeproj`
 edit `ios/fastlane/Fastfile`  
 Note: Change the part `ReactNativePlatform` depends on project name.
 
@@ -120,6 +124,48 @@ platform :ios do
     match(type: "appstore")
     build_app(scheme: "ReactNativePlatform")
     upload_to_testflight(
+      skip_waiting_for_build_processing: true
+    )
+    clean_build_artifacts
+  end
+end
+```
+
+### Using `.xcworkspace`(cocoapods)
+edit `ios/fastlane/Fastfile`  
+Note: Change the part `ReactNativePlatform` depends on project name.
+
+And add below code at `Gemfile`(Put the specific version depends on situation)
+
+```
+gem 'cocoapods', '1.7.2'
+```
+
+```
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new release build to the App Store"
+  lane :release do
+    # Cannot use increment function for .xcworkplace
+    # increment_build_number(xcodeproj: "ReactNativePlatform.xcodeproj")
+    match(type: "appstore")
+    cocoapods
+    build_app(workspace: "ReactNativePlatform.xcworkspace", scheme: "ReactNativePlatform")
+    upload_to_app_store(
+      skip_waiting_for_build_processing: true
+    )
+    clean_build_artifacts
+  end
+
+  desc "Push a new release build to TestFlight"
+  lane :beta do
+    # Cannot use increment function for .xcworkplace
+    # increment_build_number(xcodeproj: "ReactNativePlatform.xcodeproj")
+    match(type: "appstore")
+    cocoapods
+    build_app(workspace: "ReactNativePlatform.xcworkspace", scheme: "ReactNativePlatform")
+    upload_to_app_store(
       skip_waiting_for_build_processing: true
     )
     clean_build_artifacts
@@ -1029,55 +1075,3 @@ Select which branch we would like to hook and select the `parallel_builds` workf
 # Ref
 [Publishing to Google Play Store](https://facebook.github.io/react-native/docs/signed-apk-android)  
 [Nuke](https://docs.fastlane.tools/actions/match/#nuke)
-
-# android crash on simurator(on PC)
-
-```
-android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-
-    defaultConfig {
-        applicationId "com.kikureco"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
-        ndk {
-            // For making apk file
-            // abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
-
-            // For developing to avoid crash
-            abiFilters 'armeabi-v7a','x86'
-
-        }
-    }
-
-    // Comment out below for developing to avoid crash
-    // signingConfigs {
-    //     release {
-    //             storeFile file(System.getenv("MYAPP_UPLOAD_STORE_FILE"))
-    //             storePassword System.getenv("MYAPP_UPLOAD_STORE_PASSWORD")
-    //             keyAlias System.getenv("MYAPP_UPLOAD_KEY_ALIAS")
-    //             keyPassword System.getenv("MYAPP_UPLOAD_KEY_PASSWORD")
-    //     }
-    // }
-
-    splits {
-        abi {
-            reset()
-            enable enableSeparateBuildPerCPUArchitecture
-            universalApk false  // If true, also generate a universal APK
-            include "armeabi-v7a", "x86"
-        }
-    }
-    buildTypes {
-        release {
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            // Comment out below for developing to avoid crash
-            // signingConfig signingConfigs.release
-```
-
-# Cannot delete and re-use applicationID
-https://www.quora.com/How-can-I-completely-delete-unpublished-apps-from-my-Google-Developer-Console
