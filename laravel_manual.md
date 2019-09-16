@@ -45,6 +45,8 @@ rollback
 php artisan migrate:rollback --step=1
 ```
 
+注意：migrationファイルの名前とclass名は一致していないと、migrateの際にエラーが出る
+
 # Add columns
 ```
 php artisan make:migration add_column_in_users_table --table=users
@@ -350,5 +352,17 @@ use App\Http\Requests\LessonRequest;
 
         return redirect('lessons');
     }
+```
+
+# 他人のlaravelアプリを持ってきたとき
+```
+composer install
+
+.envの作成(もしくはコピー)
+php artisan key:generate
+
+php artisan migrate
+もしエラーがでたら
+composer dump-autoload
 ```
 
