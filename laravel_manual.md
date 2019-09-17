@@ -366,3 +366,7 @@ php artisan migrate
 composer dump-autoload
 ```
 
+# ログアウトしたあとに、戻るボタンを押すと前のページが見える
+https://stackoverflow.com/a/42057397
+
+
